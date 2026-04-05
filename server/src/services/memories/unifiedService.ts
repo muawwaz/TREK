@@ -268,10 +268,13 @@ export function removeAlbumLink(tripId: string, linkId: string, userId: number):
   }
 
   try {
-    db.prepare('DELETE FROM trip_photos WHERE trip_id = ? AND album_link_id = ?')
-      .run(tripId, linkId);
-    db.prepare('DELETE FROM trip_album_links WHERE id = ? AND trip_id = ? AND user_id = ?')
-      .run(linkId, tripId, userId);
+    db.transaction(() => {
+      db.prepare('DELETE FROM trip_photos WHERE trip_id = ? AND album_link_id = ?')
+        .run(tripId, linkId);
+      db.prepare('DELETE FROM trip_album_links WHERE id = ? AND trip_id = ? AND user_id = ?')
+        .run(linkId, tripId, userId);
+    })();
+    
     return success(true);
   } catch (error) {
     return mapDbError(error, 'Failed to remove album link');
